@@ -42,6 +42,7 @@ library(ggplot2)
 ```
 Partition training set into training and crossvalidation
 ```{r , echo=TRUE}
+set.seed(12334)
 inTrain <- createDataPartition(y=training$classe, p=0.7, list=FALSE)
 training_set <- training[inTrain,]
 crossv_set <- training[-inTrain,]
@@ -93,7 +94,7 @@ confusionMatrix(prediction_rf, crossv_set$classe)
 ```
 
 ###Conclusion
-Random Forest algorithm has better accuracy than Decision Trees. Accuracy for Decision Tree is 0.7436 while accuracy for Random Forest is 0.9946 Therefore, the Random Forest model is chosen. With such a high accuracy, we can expect a very good classification of the 20 test samples. 
+Random Forest algorithm has better accuracy than Decision Trees. Accuracy for Decision Tree is 0.7652 while accuracy for Random Forest is 0.9946 Therefore, the Random Forest model is chosen. The out-of-sample error for predictions compared to the cross-validation set is approximately 0.005, and it is calculated as 1 - accuracy. With such a high accuracy, we can expect a very good classification of the 20 test samples. 
 
 ##Assignment: Prediction for the test set
 ```{r, echo=TRUE}
