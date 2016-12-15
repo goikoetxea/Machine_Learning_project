@@ -1,0 +1,102 @@
+---
+title: "Machine Learning Project"
+output: html_document
+---
+
+##Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+##Data
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+##Results
+###Load and clean data
+
+Replace missing values and #DIV/0 with NA
+```{r, echo=TRUE}
+training <- read.csv("pml-training.csv", na.strings = c("","NA","#DIV/0"))
+testing <- read.csv("pml-testing.csv", na.strings = c("","NA","#DIV/0"))
+```
+Remove columns which do not have all data.
+```{r, echo=TRUE}
+training <- training [,colSums(is.na(training))==0]
+testing <- testing [,colSums(is.na(testing))==0]
+```
+Remove seven first columns, which do not have relavant variables.
+```{r , echo=TRUE}
+training <- training[, -c(1:7)]
+testing <- testing[, -c(1:7)]
+```
+###Partition data
+```{r, echo=T, message=FALSE, warning=FALSE}
+library(caret)
+library(ggplot2)
+```
+Partition training set into training and crossvalidation
+```{r , echo=TRUE}
+inTrain <- createDataPartition(y=training$classe, p=0.7, list=FALSE)
+training_set <- training[inTrain,]
+crossv_set <- training[-inTrain,]
+```
+
+```{r , echo=TRUE}
+qplot(training$classe, ylab="Frequency", xlab="classe", main="Frequency of the 'classe' variable in the training set")
+```
+
+We observe that for the subtraining set, classe A is the most frequent and classe D is the least frequent.
+
+###Predicting with Machine Learning algorithms
+####1. Use of Decision tree
+```{r, echo=T, message=FALSE, warning=FALSE}
+library(rpart); library(rattle); library(rpart.plot)
+```
+
+```{r, echo=TRUE}
+fit_tree <- rpart(classe  ~. , data=training_set, method="class")
+fancyRpartPlot(fit_tree)
+```
+
+Prediction with Decision tree
+```{r, echo=TRUE}
+set.seed(12334)
+prediction_tree <- predict(fit_tree, crossv_set,type="class")
+```
+Confusion Matrix
+```{r, echo=TRUE}
+confusionMatrix(prediction_tree, crossv_set$classe)
+```
+
+####2. Use of Random Forest
+```{r, echo=T, message=FALSE, warning=FALSE}
+library(randomForest)
+```
+
+```{r, echo=TRUE}
+set.seed(12334)
+fit_rf <- randomForest(classe  ~. , data=training_set)
+```
+Prediction with Random Forest
+```{r, echo=TRUE}
+prediction_rf <- predict(fit_rf, crossv_set)
+```
+Confusion Matrix
+```{r, echo=TRUE}
+confusionMatrix(prediction_rf, crossv_set$classe)
+```
+
+###Conclusion
+Random Forest algorithm has better accuracy than Decision Trees. Accuracy for Decision Tree is 0.7436 while accuracy for Random Forest is 0.9946 Therefore, the Random Forest model is chosen. With such a high accuracy, we can expect a very good classification of the 20 test samples. 
+
+##Assignment: Prediction for the test set
+```{r, echo=TRUE}
+prediction_final <- predict(fit_rf, testing)
+prediction_final
+```
